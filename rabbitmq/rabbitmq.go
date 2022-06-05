@@ -62,11 +62,6 @@ func (r *RabbitMQ) failOnErr(msg string, err error) {
 	}
 }
 
-// NewRabbitMQSimple simple 模式 step1: 创建 simple 模式实例
-func NewRabbitMQSimple(queueName string) *RabbitMQ {
-	return NewRabbitMQ(queueName, "", "")
-}
-
 // applyQueue 申请队列
 func (r *RabbitMQ) applyQueue() {
 	// 申请队列，如果不存在会自动创建 保证队列存在，消息可以发送到队列中
@@ -76,13 +71,19 @@ func (r *RabbitMQ) applyQueue() {
 		false, // 是否自动删除
 		false, // 是否具有排他性
 		false, // 是否阻塞
-		nil)   // 额外属性
+		nil,   // 额外属性
+	)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-// PublishSimple simple 模式 step2:生产代码
+// NewRabbitMQSimple simple 模式 step1:创建实例
+func NewRabbitMQSimple(queueName string) *RabbitMQ {
+	return NewRabbitMQ(queueName, "", "")
+}
+
+// PublishSimple simple 模式 step2:生产消息
 func (r *RabbitMQ) PublishSimple(msg string) {
 	// 1.申请队列
 	r.applyQueue()
@@ -114,7 +115,8 @@ func (r *RabbitMQ) ConsumeSimple() {
 		false, // 是否具有排他性
 		false, // true:表示不能将同一个 connection 中发送的消息传递给这个 connection 中的消费者
 		false, // true:表示消息需要阻塞
-		nil)
+		nil,
+	)
 	if err != nil {
 		fmt.Printf("接收消息失败,err:%s\n", err)
 	}
@@ -124,7 +126,102 @@ func (r *RabbitMQ) ConsumeSimple() {
 	go func() {
 		for msg := range messages {
 			// 实现具体的消息处理逻辑，如落库等，这里简单打印
-			log.Printf("received a message:%s", msg.Body)
+			log.Printf("received a message, 消费%s", msg.Body)
+		}
+	}()
+	log.Printf("[*] Waiting for message, to exit ptrss CTRC+C")
+	<-forever // 因为 forever 一直没有值 所以会一直等待 达到阻塞效果
+}
+
+// NewRabbitMQPubSub 订阅模式 step1:创建实例
+func NewRabbitMQPubSub(exchangeName string) *RabbitMQ {
+	// 1.创建实例
+	mq := NewRabbitMQ("", exchangeName, "")
+	var err error
+	// 2.获取 connection
+	mq.conn, err = amqp.Dial(mq.MQURL)
+	mq.failOnErr("failed to connect mq", err)
+	// 3.获取 channel
+	mq.channel, err = mq.conn.Channel()
+	mq.failOnErr("failed to open a channel", err)
+	return mq
+}
+
+// PublishPubSub 订阅模式 step2:生产消息
+func (r *RabbitMQ) PublishPubSub(message string) {
+	// 1.尝试创建交换机
+	err := r.channel.ExchangeDeclare(
+		r.Exchange,
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	r.failOnErr("failed to declare an exchange", err)
+
+	// 2.发送消息
+	err = r.channel.Publish(
+		r.Exchange,
+		"",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(message),
+		})
+}
+
+// ConsumePubSub 订阅模式 step3:消费消息
+func (r *RabbitMQ) ConsumePubSub() {
+	// 1.试探性创建交换机
+	err := r.channel.ExchangeDeclare(
+		r.Exchange,
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	r.failOnErr("failed to declare an exchange", err)
+
+	// 2.试探性创建队列，这里注意不写队列名称
+	queue, err := r.channel.QueueDeclare(
+		"", // 随机队列名称
+		false,
+		false,
+		true,
+		false,
+		nil,
+	)
+	r.failOnErr("failed to declare a queue", err)
+
+	// 3.绑定队列到 exchange 中
+	err = r.channel.QueueBind(
+		queue.Name,
+		"", // 在订阅模式下,这里的 key 需要为空
+		r.Exchange,
+		false, nil,
+	)
+
+	// 4.消费消息
+	messages, err := r.channel.Consume(
+		queue.Name,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	forever := make(chan bool) // 创建一个阻塞通道
+	// 启用 goroutine 处理消息
+	go func() {
+		for msg := range messages {
+			// 实现具体的消息处理逻辑，如落库等，这里简单打印
+			log.Printf("received a message, 消费%s", msg.Body)
 		}
 	}()
 	log.Printf("[*] Waiting for message, to exit ptrss CTRC+C")
