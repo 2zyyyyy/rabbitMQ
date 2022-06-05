@@ -10,12 +10,12 @@ package main
 
 import (
 	"fmt"
-	"rabbitMQ/rabbitmq"
+	"rabbitMQ/rabbitMQ"
 )
 
 func main() {
 	// 1.创建实例
-	mq := rabbitmq.NewRabbitMQSimple("testQ")
+	mq := rabbitMQ.NewRabbitMQSimple("testQ")
 	// 2.生产消息
 	mq.PublishSimple("wanli test simple mq message.")
 	fmt.Println("消息发送成功")

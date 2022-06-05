@@ -6,11 +6,11 @@
 
 package main
 
-import "rabbitMQ/rabbitmq"
+import "rabbitMQ/rabbitMQ"
 
 // 订阅模式消费者 2
 
 func main() {
-	mq := rabbitmq.NewRabbitMQPubSub("testEx")
+	mq := rabbitMQ.NewRabbitMQPubSub("testEx")
 	mq.ConsumePubSub()
 }

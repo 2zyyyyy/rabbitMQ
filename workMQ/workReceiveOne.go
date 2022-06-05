@@ -8,11 +8,11 @@
 
 package main
 
-import "rabbitMQ/rabbitmq"
+import "rabbitMQ/rabbitMQ"
 
 func main() {
 	// 1.创建实例
-	mq := rabbitmq.NewRabbitMQSimple("" + "testQ")
+	mq := rabbitMQ.NewRabbitMQSimple("" + "testQ")
 	// 2.消费消息
 	mq.ConsumeSimple()
 }

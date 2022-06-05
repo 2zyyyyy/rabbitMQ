@@ -8,7 +8,7 @@ package main
 
 import (
 	"fmt"
-	"rabbitMQ/rabbitmq"
+	"rabbitMQ/rabbitMQ"
 	"strconv"
 	"time"
 )
@@ -16,7 +16,7 @@ import (
 // 订阅模式生产者
 
 func main() {
-	mq := rabbitmq.NewRabbitMQPubSub("testEx")
+	mq := rabbitMQ.NewRabbitMQPubSub("testEx")
 	for i := 0; i < 100; i++ {
 		mq.PublishPubSub("订阅模式生产第" + strconv.Itoa(i) + "条数据")
 		time.Sleep(time.Second)

@@ -4,7 +4,7 @@
 @Date : 2022/6/2 23:29
 */
 
-package rabbitmq
+package rabbitMQ
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"log"
 )
 
-// url格式：amqp:账号:密码@rabbitmq 服务器地址:端口号/vhost
+// url格式：amqp:账号:密码@rabbitMQ 服务器地址:端口号/vhost
 
 const (
 	MQURL = "amqp://simpleU:123456@localhost:5672/simple"
@@ -155,7 +155,7 @@ func (r *RabbitMQ) PublishPubSub(message string) {
 		"fanout",
 		true,
 		false,
-		false,
+		false, // true:表示这个 exchange 不可以被 client 用来推送消息，仅用来进行 exchange 和 exchange 之间的绑定
 		false,
 		nil,
 	)
