@@ -1,7 +1,9 @@
-### RabbitMQ Demo 
-#### 1.安装第三方库 
+### RabbitMQ 急速入门 
+#### 快速开始
+创建一个本地项目rabbitMQ，在根目录下使用`go get`命令安装对应的第三方库
 > go get -u github.com/streadway/amqp
 #### 2.目录结构
+``` 
 $ tree
 ├── go.mod
 ├── go.sum
@@ -19,7 +21,7 @@ $ tree
     ├── workPublish.go
     ├── workReceiveOne.go
     └── workReceiveTwo.go
-
+```
 - simpleMQ：简单模式
   - ![img](https://tva1.sinaimg.cn/large/e6c9d24ely1h2x8ukrgv5j20b5034mx5.jpg)
   - 消息产生着将消息放入队列
